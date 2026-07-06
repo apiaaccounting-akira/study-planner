@@ -62,7 +62,27 @@
   .task .title { font-size: 14.5px; }
   .task.done .title { color: var(--done); text-decoration: line-through; }
   .task .meta { font-size: 11.5px; color: var(--sub); margin-top: 2px; }
+  .task .target { font-size: 12.5px; font-weight: bold; color: var(--accent); margin-top: 3px; }
+  .task.done .target { color: var(--done); font-weight: normal; }
   .task .doneat { font-size: 11.5px; color: var(--accent); margin-top: 2px; }
+  /* 進め方モーダル */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, .55); z-index: 20;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal {
+    background: var(--card); border-radius: 14px; padding: 18px;
+    max-width: 480px; width: 100%; max-height: 80vh; overflow-y: auto;
+    border: 1px solid var(--line);
+  }
+  .modal h3 { margin: 0 0 4px; font-size: 15px; color: var(--accent); }
+  .modal .m-target { font-size: 13px; font-weight: bold; margin-bottom: 10px; }
+  .modal .m-howto { font-size: 13.5px; white-space: pre-wrap; line-height: 1.7; }
+  .modal .m-close {
+    display: block; margin: 14px 0 0 auto; border: 1px solid var(--line);
+    background: var(--bg); color: var(--text); border-radius: 8px;
+    padding: 7px 20px; font-size: 13.5px; cursor: pointer;
+  }
   .task .savednote {
     font-size: 12px; color: var(--accent); margin-top: 4px;
     background: var(--bg); border-radius: 8px; padding: 4px 8px;
@@ -276,13 +296,17 @@ function renderDay() {
             <div class="check">${t.status === "done" ? "✓" : ""}</div>
             <div class="body">
               <div class="title">${esc(t.title)}</div>
+              ${t.target ? `<div class="target">📌 ${esc(t.target)}</div>` : ""}
               ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
               ${t.status === "done" && t.done_at ? `<div class="doneat">${fmtDoneAt(t.done_at, t.plan_date)}</div>` : ""}
               ${t.note && !editing ? `<div class="savednote">📝 ${esc(t.note)}</div>` : ""}
             </div>
             <div class="right">
               ${t.est_min ? `<div class="est">${t.est_min}分</div>` : ""}
-              <button class="notebtn" data-act="note" title="メモ">📝</button>
+              <div>
+                ${t.howto ? `<button class="notebtn" data-act="info" title="進め方">ℹ️</button>` : ""}
+                <button class="notebtn" data-act="note" title="メモ">📝</button>
+              </div>
             </div>
           </div>
           ${editing ? `
@@ -302,6 +326,8 @@ function renderDay() {
   app.querySelectorAll(".task").forEach(el => {
     const id = +el.dataset.id;
     el.querySelector('[data-act="toggle"]').addEventListener("click", () => toggle(id));
+    const infoBtn = el.querySelector('[data-act="info"]');
+    if (infoBtn) infoBtn.addEventListener("click", (ev) => { ev.stopPropagation(); showInfo(id); });
     el.querySelector('[data-act="note"]').addEventListener("click", (ev) => {
       ev.stopPropagation();
       noteEditId = (noteEditId === id) ? null : id;
@@ -334,6 +360,23 @@ async function toggle(id) {
     renderDay();
     alert("保存できなかった…もう一度タップしてみて");
   }
+}
+
+function showInfo(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t || !t.howto) return;
+  const bg = document.createElement("div");
+  bg.className = "modal-bg";
+  bg.innerHTML = `
+    <div class="modal">
+      <h3>💡 ${esc(t.title)}</h3>
+      ${t.target ? `<div class="m-target">📌 ${esc(t.target)}</div>` : ""}
+      <div class="m-howto">${esc(t.howto)}</div>
+      <button class="m-close">とじる</button>
+    </div>`;
+  bg.addEventListener("click", (ev) => { if (ev.target === bg) bg.remove(); });
+  bg.querySelector(".m-close").addEventListener("click", () => bg.remove());
+  document.body.appendChild(bg);
 }
 
 async function saveNote(id, text) {
