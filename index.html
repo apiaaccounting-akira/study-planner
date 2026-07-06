@@ -62,6 +62,7 @@
   .task .title { font-size: 14.5px; }
   .task.done .title { color: var(--done); text-decoration: line-through; }
   .task .meta { font-size: 11.5px; color: var(--sub); margin-top: 2px; }
+  .task .doneat { font-size: 11.5px; color: var(--accent); margin-top: 2px; }
   .task .savednote {
     font-size: 12px; color: var(--accent); margin-top: 4px;
     background: var(--bg); border-radius: 8px; padding: 4px 8px;
@@ -175,6 +176,14 @@ function labelOf(d) {
   return d === jstToday() ? base + " 今日" : base;
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function fmtDoneAt(iso, planDate) {
+  const d = new Date(new Date(iso).getTime() + 9 * 3600 * 1000); // JST
+  const s = `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
+  const doneDate = d.toISOString().slice(0, 10);
+  if (doneDate < planDate) return `✅ ${s} におわった ⚡前倒し！`;
+  if (doneDate > planDate) return `✅ ${s} におわった`;
+  return `✅ ${s} におわった`;
+}
 
 // --- 読み込み・描画 ---
 const app = document.getElementById("app");
@@ -268,6 +277,7 @@ function renderDay() {
             <div class="body">
               <div class="title">${esc(t.title)}</div>
               ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
+              ${t.status === "done" && t.done_at ? `<div class="doneat">${fmtDoneAt(t.done_at, t.plan_date)}</div>` : ""}
               ${t.note && !editing ? `<div class="savednote">📝 ${esc(t.note)}</div>` : ""}
             </div>
             <div class="right">
@@ -385,11 +395,12 @@ function renderWeek() {
       chips += `<span class="chip ${full ? "full" : ""}" ${full ? `style="background:${s.color}"` : ""}>${s.emoji}${gd}/${g.length}</span>`;
     }
     const allDone = day.length > 0 && day.every(t => t.status === "done");
+    const ahead = d > jstToday() && day.some(t => t.status === "done");
     html += `
       <div class="dayrow ${d === jstToday() ? "today" : ""}" data-date="${d}">
         <div class="d">${mdOf(d)}<span class="wd">(${wdOf(d)})</span></div>
         <div class="chips">${chips || '<span class="chip">予定なし</span>'}</div>
-        <div class="daydone">${allDone ? "🌸" : ""}</div>
+        <div class="daydone">${allDone ? "🌸" : (ahead ? "⚡" : "")}</div>
       </div>`;
   }
   app.innerHTML = html;
