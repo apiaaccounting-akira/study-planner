@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>今日のやること</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>">
 <style>
   :root {
     --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --sub: #64748b;
@@ -23,16 +24,16 @@
     font-size: 15px; line-height: 1.5;
   }
   .wrap { max-width: 560px; margin: 0 auto; padding: 14px 14px 60px; }
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  h1 { font-size: 18px; margin: 0; }
-  .datenav { display: flex; align-items: center; gap: 6px; }
-  .datenav button {
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+  h1 { font-size: 17px; margin: 0; white-space: nowrap; }
+  .datenav { display: flex; align-items: center; gap: 5px; }
+  .datenav button, .modebtn {
     border: 1px solid var(--line); background: var(--card); color: var(--text);
-    border-radius: 8px; padding: 6px 12px; font-size: 15px; cursor: pointer;
+    border-radius: 8px; padding: 6px 10px; font-size: 14px; cursor: pointer;
   }
-  .datenav .today-btn { font-size: 12px; padding: 6px 8px; }
-  .datelabel { font-weight: bold; font-size: 15px; min-width: 7.5em; text-align: center; }
-  .progress-card {
+  .modebtn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .datelabel { font-weight: bold; font-size: 14px; min-width: 6.8em; text-align: center; }
+  .progress-card, .ms-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 14px;
     padding: 12px 16px; margin-bottom: 14px;
   }
@@ -43,17 +44,15 @@
   .bar > div { height: 100%; background: var(--accent); border-radius: 5px; transition: width .3s; }
   .cheer { font-size: 12.5px; color: var(--sub); margin-top: 6px; }
   .subject { margin-bottom: 14px; }
-  .subject h2 {
-    font-size: 13.5px; margin: 0 0 6px 4px; display: flex; align-items: center; gap: 6px;
-  }
+  .subject h2 { font-size: 13.5px; margin: 0 0 6px 4px; display: flex; align-items: center; gap: 6px; }
   .subject h2 .min { font-weight: normal; font-size: 11.5px; color: var(--sub); }
   .task {
-    display: flex; align-items: flex-start; gap: 10px;
     background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 11px 12px; margin-bottom: 6px; cursor: pointer; user-select: none;
+    padding: 11px 12px; margin-bottom: 6px; user-select: none;
     border-left-width: 4px;
   }
-  .task .check {
+  .task-main { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+  .check {
     flex: none; width: 24px; height: 24px; border-radius: 50%;
     border: 2px solid var(--line); display: flex; align-items: center; justify-content: center;
     font-size: 14px; color: #fff; margin-top: 1px; transition: all .15s;
@@ -63,8 +62,44 @@
   .task .title { font-size: 14.5px; }
   .task.done .title { color: var(--done); text-decoration: line-through; }
   .task .meta { font-size: 11.5px; color: var(--sub); margin-top: 2px; }
-  .task .est { flex: none; font-size: 11px; color: var(--sub); background: var(--bg);
-    border-radius: 8px; padding: 2px 7px; margin-top: 2px; }
+  .task .savednote {
+    font-size: 12px; color: var(--accent); margin-top: 4px;
+    background: var(--bg); border-radius: 8px; padding: 4px 8px;
+  }
+  .task .right { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .task .est { font-size: 11px; color: var(--sub); background: var(--bg); border-radius: 8px; padding: 2px 7px; }
+  .notebtn {
+    border: none; background: none; font-size: 15px; cursor: pointer; padding: 0 2px;
+    opacity: .55;
+  }
+  .note-editor { margin-top: 8px; }
+  .note-editor textarea {
+    width: 100%; min-height: 56px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); color: var(--text); font: inherit; font-size: 13px; padding: 8px;
+    resize: vertical;
+  }
+  .note-editor .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+  .note-editor button {
+    border: 1px solid var(--line); border-radius: 8px; padding: 5px 14px;
+    font-size: 13px; cursor: pointer; background: var(--card); color: var(--text);
+  }
+  .note-editor .save { background: var(--accent); border-color: var(--accent); color: #fff; }
+  /* 週表示 */
+  .ms-card h3 { margin: 0 0 8px; font-size: 13.5px; color: var(--accent); }
+  .ms-item { display: flex; gap: 8px; font-size: 13px; margin-bottom: 5px; align-items: flex-start; }
+  .ms-item .tag { flex: none; font-size: 11px; font-weight: bold; border-radius: 8px; padding: 1px 8px; color: #fff; margin-top: 2px; }
+  .dayrow {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 6px; cursor: pointer;
+  }
+  .dayrow.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .dayrow .d { flex: none; width: 4.6em; font-size: 13.5px; font-weight: bold; }
+  .dayrow .d .wd { font-size: 11px; color: var(--sub); font-weight: normal; }
+  .dayrow .chips { flex: 1; display: flex; flex-wrap: wrap; gap: 5px; }
+  .chip { font-size: 11.5px; border-radius: 8px; padding: 1px 7px; border: 1px solid var(--line); color: var(--sub); }
+  .chip.full { color: #fff; border: none; }
+  .dayrow .daydone { flex: none; font-size: 15px; }
   .allclear {
     text-align: center; padding: 26px 10px; background: var(--card);
     border: 1px solid var(--line); border-radius: 14px; font-size: 15px;
@@ -78,21 +113,23 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>📋 今日のやること</h1>
+    <h1>📋 やること</h1>
     <div class="datenav">
       <button id="prev">‹</button>
       <div class="datelabel" id="datelabel"></div>
       <button id="next">›</button>
-      <button id="today" class="today-btn">今日</button>
+      <button id="today">今日</button>
+      <button id="modetoggle" class="modebtn">週</button>
     </div>
   </header>
   <div id="app"><div class="msg">読み込み中…</div></div>
-  <footer>チェックは自動で保存されるよ ／ 22:00にはおふとん🛏</footer>
+  <footer>チェックとメモは自動で保存されるよ ／ 22:00にはおふとん🛏</footer>
 </div>
 <script>
 const SUPABASE_URL = "https://yhnuhqpkzbjjmmcfwvcb.supabase.co";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlobnVocXBremJqam1tY2Z3dmNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwMTQzNTIsImV4cCI6MjA5NDU5MDM1Mn0.f6O-qvW7RxQKgxLDl34SgZN1i6FQLII35FPuE9cyNCE";
 const VIEW = SUPABASE_URL + "/rest/v1/study_todo_view";
+const MS_VIEW = SUPABASE_URL + "/rest/v1/study_milestone_view";
 
 const SUBJECTS = {
   eiken:  { label: "英検",  emoji: "🎯", color: "var(--eiken)"  },
@@ -104,14 +141,12 @@ const SUBJECTS = {
 const ORDER = ["eiken", "kokugo", "sugaku", "eigo", "other"];
 const CHEERS_PART = ["いい調子！", "その調子！", "半分こえたら勝ち！", "あとちょっと！"];
 
-// --- 家族鍵: URLの #k=... → localStorage ---
 function familyKey() {
   const m = location.hash.match(/k=([A-Za-z0-9]+)/);
   if (m) { localStorage.setItem("family_key", m[1]); return m[1]; }
   return localStorage.getItem("family_key") || "";
 }
 const KEY = familyKey();
-
 function headers() {
   return { "apikey": ANON_KEY, "x-family-key": KEY, "Content-Type": "application/json" };
 }
@@ -119,39 +154,81 @@ function headers() {
 // --- 日付（JST） ---
 function jstToday() { return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10); }
 let current = jstToday();
+let mode = "day"; // day | week
+let noteEditId = null;
 const WD = ["日", "月", "火", "水", "木", "金", "土"];
 function shiftDate(d, n) {
   const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() + n);
   return t.toISOString().slice(0, 10);
 }
-function labelOf(d) {
+function mondayOf(d) {
   const t = new Date(d + "T00:00:00Z");
-  const base = `${t.getUTCMonth() + 1}/${t.getUTCDate()}(${WD[t.getUTCDay()]})`;
+  return shiftDate(d, -((t.getUTCDay() + 6) % 7));
+}
+function mdOf(d) {
+  const t = new Date(d + "T00:00:00Z");
+  return `${t.getUTCMonth() + 1}/${t.getUTCDate()}`;
+}
+function wdOf(d) { return WD[new Date(d + "T00:00:00Z").getUTCDay()]; }
+function labelOf(d) {
+  const base = `${mdOf(d)}(${wdOf(d)})`;
   return d === jstToday() ? base + " 今日" : base;
 }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
-// --- 描画 ---
+// --- 読み込み・描画 ---
 const app = document.getElementById("app");
-let tasks = [];
+let tasks = [];      // 日表示: 当日分
+let weekTasks = [];  // 週表示: 7日分
+let milestones = [];
+
+function updateHeader() {
+  const lbl = document.getElementById("datelabel");
+  const tgl = document.getElementById("modetoggle");
+  if (mode === "day") {
+    lbl.textContent = labelOf(current);
+    tgl.textContent = "週";
+    tgl.classList.remove("active");
+  } else {
+    const mon = mondayOf(current);
+    lbl.textContent = `${mdOf(mon)}〜${mdOf(shiftDate(mon, 6))}`;
+    tgl.textContent = "日";
+    tgl.classList.add("active");
+  }
+}
 
 async function load() {
-  document.getElementById("datelabel").textContent = labelOf(current);
+  updateHeader();
   if (!KEY) {
     app.innerHTML = '<div class="msg err">かぎ付きのリンク（#k=…）から開いてね。<br>ブックマークし直すとなおるよ。</div>';
     return;
   }
   app.innerHTML = '<div class="msg">読み込み中…</div>';
   try {
-    const res = await fetch(`${VIEW}?plan_date=eq.${current}&select=*`, { headers: headers() });
-    if (!res.ok) throw new Error(res.status);
-    tasks = await res.json();
-    render();
+    if (mode === "day") {
+      const res = await fetch(`${VIEW}?plan_date=eq.${current}&select=*`, { headers: headers() });
+      if (!res.ok) throw new Error(res.status);
+      tasks = await res.json();
+      renderDay();
+    } else {
+      const mon = mondayOf(current);
+      const sun = shiftDate(mon, 6);
+      const [r1, r2] = await Promise.all([
+        fetch(`${VIEW}?plan_date=gte.${mon}&plan_date=lte.${sun}&select=plan_date,subject,status,est_min`, { headers: headers() }),
+        fetch(`${MS_VIEW}?week_start=eq.${mon}&select=*&order=item_order`, { headers: headers() }),
+      ]);
+      if (!r1.ok || !r2.ok) throw new Error("fetch");
+      weekTasks = await r1.json();
+      milestones = await r2.json();
+      renderWeek();
+    }
   } catch (e) {
     app.innerHTML = '<div class="msg err">読み込めなかった…電波のいいところでリロードしてみて。</div>';
   }
 }
 
-function render() {
+// --- 日表示 ---
+function renderDay() {
   if (tasks.length === 0) {
     app.innerHTML = '<div class="allclear"><div class="big">🌴</div>この日の予定はまだないよ</div>';
     return;
@@ -160,7 +237,6 @@ function render() {
   const doneN = tasks.filter(t => t.status === "done").length;
   const remainMin = tasks.filter(t => t.status !== "done").reduce((s, t) => s + (t.est_min || 0), 0);
   const pct = Math.round(doneN / tasks.length * 100);
-
   let cheer;
   if (doneN === 0) cheer = "まずは1つ✅にしてみよう";
   else if (doneN === tasks.length) cheer = "全部おわり！おつかれさま！🌸";
@@ -184,23 +260,51 @@ function render() {
     html += `<div class="subject"><h2>${s.emoji} ${s.label} <span class="min">計${gMin}分</span></h2>`;
     for (const t of group) {
       const meta = [t.material, t.pages].filter(x => x && x !== "—").join("　");
+      const editing = noteEditId === t.id;
       html += `
         <div class="task ${t.status === "done" ? "done" : ""}" data-id="${t.id}" style="border-left-color:${s.color}">
-          <div class="check">${t.status === "done" ? "✓" : ""}</div>
-          <div class="body">
-            <div class="title">${esc(t.title)}</div>
-            ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
+          <div class="task-main" data-act="toggle">
+            <div class="check">${t.status === "done" ? "✓" : ""}</div>
+            <div class="body">
+              <div class="title">${esc(t.title)}</div>
+              ${meta ? `<div class="meta">${esc(meta)}</div>` : ""}
+              ${t.note && !editing ? `<div class="savednote">📝 ${esc(t.note)}</div>` : ""}
+            </div>
+            <div class="right">
+              ${t.est_min ? `<div class="est">${t.est_min}分</div>` : ""}
+              <button class="notebtn" data-act="note" title="メモ">📝</button>
+            </div>
           </div>
-          ${t.est_min ? `<div class="est">${t.est_min}分</div>` : ""}
+          ${editing ? `
+          <div class="note-editor">
+            <textarea placeholder="やったこと・×の数・気づきをメモ（例: でる度A 500〜600、×12個）">${esc(t.note || "")}</textarea>
+            <div class="row">
+              <button data-act="cancel">やめる</button>
+              <button class="save" data-act="save">保存</button>
+            </div>
+          </div>` : ""}
         </div>`;
     }
     html += `</div>`;
   }
   app.innerHTML = html;
-  app.querySelectorAll(".task").forEach(el => el.addEventListener("click", () => toggle(+el.dataset.id)));
-}
 
-function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  app.querySelectorAll(".task").forEach(el => {
+    const id = +el.dataset.id;
+    el.querySelector('[data-act="toggle"]').addEventListener("click", () => toggle(id));
+    el.querySelector('[data-act="note"]').addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      noteEditId = (noteEditId === id) ? null : id;
+      renderDay();
+    });
+    const editor = el.querySelector(".note-editor");
+    if (editor) {
+      editor.querySelector('[data-act="cancel"]').addEventListener("click", () => { noteEditId = null; renderDay(); });
+      editor.querySelector('[data-act="save"]').addEventListener("click", () => saveNote(id, editor.querySelector("textarea").value));
+      editor.querySelector("textarea").focus();
+    }
+  });
+}
 
 async function toggle(id) {
   const t = tasks.find(x => x.id === id);
@@ -208,7 +312,7 @@ async function toggle(id) {
   const toDone = t.status !== "done";
   t.status = toDone ? "done" : "todo";
   t.done_at = toDone ? new Date().toISOString() : null;
-  render(); // 楽観更新
+  renderDay();
   try {
     const res = await fetch(`${VIEW}?id=eq.${id}`, {
       method: "PATCH", headers: headers(),
@@ -216,15 +320,92 @@ async function toggle(id) {
     });
     if (!res.ok) throw new Error(res.status);
   } catch (e) {
-    t.status = toDone ? "todo" : "done"; // 失敗したら戻す
-    render();
+    t.status = toDone ? "todo" : "done";
+    renderDay();
     alert("保存できなかった…もう一度タップしてみて");
   }
 }
 
-document.getElementById("prev").onclick = () => { current = shiftDate(current, -1); load(); };
-document.getElementById("next").onclick = () => { current = shiftDate(current, 1); load(); };
-document.getElementById("today").onclick = () => { current = jstToday(); load(); };
+async function saveNote(id, text) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  const newNote = text.trim() || null;
+  try {
+    const res = await fetch(`${VIEW}?id=eq.${id}`, {
+      method: "PATCH", headers: headers(),
+      body: JSON.stringify({ note: newNote }),
+    });
+    if (!res.ok) throw new Error(res.status);
+    t.note = newNote;
+    noteEditId = null;
+    renderDay();
+  } catch (e) {
+    alert("メモを保存できなかった…もう一度おしてみて");
+  }
+}
+
+// --- 週表示 ---
+function renderWeek() {
+  const mon = mondayOf(current);
+  let html = "";
+
+  if (milestones.length) {
+    html += `<div class="ms-card"><h3>🏁 今週のゴール</h3>`;
+    for (const m of milestones) {
+      const s = SUBJECTS[m.subject] || { label: "週", emoji: "⭐", color: "var(--other)" };
+      html += `<div class="ms-item"><span class="tag" style="background:${s.color}">${s.emoji}${s.label}</span><span>${esc(m.goal)}</span></div>`;
+    }
+    html += `</div>`;
+  }
+
+  const total = weekTasks.length;
+  const done = weekTasks.filter(t => t.status === "done").length;
+  if (total) {
+    const pct = Math.round(done / total * 100);
+    html += `
+      <div class="progress-card">
+        <div class="progress-row">
+          <span class="progress-num">週 ${done} / ${total} 完了</span>
+          <span class="progress-min">${pct}%</span>
+        </div>
+        <div class="bar"><div style="width:${pct}%"></div></div>
+      </div>`;
+  }
+
+  for (let i = 0; i < 7; i++) {
+    const d = shiftDate(mon, i);
+    const day = weekTasks.filter(t => t.plan_date === d);
+    let chips = "";
+    for (const key of ORDER) {
+      const g = day.filter(t => t.subject === key);
+      if (!g.length) continue;
+      const gd = g.filter(t => t.status === "done").length;
+      const s = SUBJECTS[key];
+      const full = gd === g.length;
+      chips += `<span class="chip ${full ? "full" : ""}" ${full ? `style="background:${s.color}"` : ""}>${s.emoji}${gd}/${g.length}</span>`;
+    }
+    const allDone = day.length > 0 && day.every(t => t.status === "done");
+    html += `
+      <div class="dayrow ${d === jstToday() ? "today" : ""}" data-date="${d}">
+        <div class="d">${mdOf(d)}<span class="wd">(${wdOf(d)})</span></div>
+        <div class="chips">${chips || '<span class="chip">予定なし</span>'}</div>
+        <div class="daydone">${allDone ? "🌸" : ""}</div>
+      </div>`;
+  }
+  app.innerHTML = html;
+  app.querySelectorAll(".dayrow").forEach(el => el.addEventListener("click", () => {
+    current = el.dataset.date;
+    mode = "day";
+    noteEditId = null;
+    load();
+  }));
+}
+
+// --- ナビ ---
+document.getElementById("prev").onclick = () => { current = shiftDate(current, mode === "day" ? -1 : -7); noteEditId = null; load(); };
+document.getElementById("next").onclick = () => { current = shiftDate(current, mode === "day" ? 1 : 7); noteEditId = null; load(); };
+document.getElementById("today").onclick = () => { current = jstToday(); noteEditId = null; load(); };
+document.getElementById("modetoggle").onclick = () => { mode = mode === "day" ? "week" : "day"; noteEditId = null; load(); };
 load();
 </script>
 </body>
